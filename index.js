@@ -23,26 +23,23 @@ function getHash(data) {
  * @param {string} src source of the file being compiled to ES5
  * @return {string} compiled source
  */
-function compileFile(file, src) {
+function compileFile(file, src, traceurOverrides) {
   var compiled;
-  compiled = compile(file, src, exports.traceurOverrides);
+  traceurOverrides = traceurOverrides || exports.traceurOverrides;
+  compiled = compile(file, src, traceurOverrides);
   if (compiled.error) throw new Error(compiled.error);
 
   return compiled.source;
 }
 
-function es6ify(config) {
-  var filePattern;
-  if (typeof config === 'object') {
-    filePattern = config['filePattern'];
-    if (!!config['traceurOverrides']) {
-      exports.traceurOverrides = config['traceurOverrides'];
-    }
-  }
+function es6ify(filePattern) {
   
   filePattern =  filePattern || /\.js$/;
 
-  return function (file) {
+  return function (file, opts) {
+    
+    var traceurOpts = opts['traceurOpts'] || {};
+    filePattern = new RegExp(opts['filePattern']) || filePattern; 
 
     // Don't es6ify the traceur runtime
     if (file === runtime) return through();
@@ -59,7 +56,7 @@ function es6ify(config) {
 
       if (!cached || cached.hash !== hash) {
         try {
-          cache[file] = { compiled: compileFile(file, data), hash: hash };
+          cache[file] = { compiled: compileFile(file, data, traceurOpts), hash: hash };
         } catch (ex) {
           this.emit('error', ex);
           return this.queue(null);
