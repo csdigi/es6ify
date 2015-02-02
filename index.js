@@ -31,9 +31,17 @@ function compileFile(file, src) {
   return compiled.source;
 }
 
-function es6ify(filePattern) {
+function es6ify(config) {
+  var filePattern;
+  
+  if typeof config === 'object':
+    filePattern = config['filePattern']
+    if (!!config['traceurOverrides']) {
+      exports.traceurOverrides = config['traceurOverrides']
+    }
+  
   filePattern =  filePattern || /\.js$/;
-
+  
   return function (file) {
 
     // Don't es6ify the traceur runtime
